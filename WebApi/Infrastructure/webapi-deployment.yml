@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webapi
+  labels: 
+    app: webapi
+spec:
+  replicas: 1
+  selector: 
+    matchLabels: 
+      app: webapi
+  strategy:
+    rollingUpdate: 
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: webapi
+    spec:
+      containers:
+      - name: webapi
+        image: webapi:latest
+        ports:
+        - containerPort: 80
+        imagePullPolicy: Never #Don't pull from DockerHub
