@@ -26,12 +26,13 @@ namespace WebApi.Controllers
                 //string connectionString = "mongodb://admin:MyPassword@87.15.22.12:27017/admin?connect=replicaSet&replicaSet=rs0";
                 //var client = new MongoClient(connectionString);
 
+                string connectionString = "mongodb://admin:MyPassword@87.15.22.12:27017/admin?connect=replicaSet&replicaSet=rs0";
+                var mongoUrl = new MongoUrlBuilder(connectionString);
                 var settings = new MongoClientSettings
                 {
-                    Servers = new List<MongoServerAddress>
-                    {
-                        new MongoServerAddress("87.15.22.12")
-                    }
+                    Server = new MongoServerAddress(mongoUrl.Server.Host, mongoUrl.Server.Port),
+                    Credential = MongoCredential.CreateCredential(mongoUrl.DatabaseName, mongoUrl.Username, mongoUrl.Password),
+                    //ReplicaSetName = mongoUrl.ReplicaSetName
                 };
                 var client = new MongoClient(settings);
 
