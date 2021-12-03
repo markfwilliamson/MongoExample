@@ -14,39 +14,31 @@ namespace WebApi.Repository
     public class MongoRepository<TDocument> : IMongoRepository<TDocument>
         where TDocument : IDocument
     {
-        private IMongoClient _mongoClient;
+        private readonly IClientSessionHandle _clientSessionHandle;
+        private readonly IMongoClient _mongoClient;
         private readonly MongoClientSettings _mongoClientSettings;
         private readonly IMongoCollection<TDocument> _collection;
 
-        public MongoRepository(IMongoDbSettings settings)
+        public MongoRepository(IMongoDbSettings settings, IMongoClient mongoClient, IClientSessionHandle clientSessionHandle)
         {
-            //string connectionString = "mongodb://admin:MyPassword@87.15.22.12:27017/admin?connect=replicaSet&replicaSet=rs0";
-            //var mongoUrl = new MongoUrlBuilder(connectionString);
-            var mongoUrl = new MongoUrlBuilder(settings.ConnectionString);
-            _mongoClientSettings = new MongoClientSettings
-            {
-                Server = new MongoServerAddress(mongoUrl.Server.Host, mongoUrl.Server.Port),
-                Credential = MongoCredential.CreateCredential(mongoUrl.DatabaseName, mongoUrl.Username, mongoUrl.Password)
-            };
+            _clientSessionHandle = clientSessionHandle;
+            _mongoClient = mongoClient;
 
-            _mongoClient = new MongoClient(_mongoClientSettings);
+            //var mongoUrl = new MongoUrlBuilder(settings.ConnectionString);
+            //_mongoClientSettings = new MongoClientSettings
+            //{
+            //    Server = new MongoServerAddress(mongoUrl.Server.Host, mongoUrl.Server.Port),
+            //    Credential = MongoCredential.CreateCredential(mongoUrl.DatabaseName, mongoUrl.Username, mongoUrl.Password)
+            //};
+
             var database = _mongoClient.GetDatabase(settings.DatabaseName);
             var collection = GetCollectionName(typeof(TDocument));
-            //if (!database.ListCollections(new ListCollectionsOptions { Filter = new BsonDocument("name", collection) }).Any())
-            //{
-            //    database.CreateCollection(collection);
-            //}
-            if (!_mongoClient.GetDatabase(database.DatabaseNamespace.DatabaseName).ListCollectionNames().ToList().Contains(collection))
+            if (!_mongoClient.GetDatabase(settings.DatabaseName).ListCollectionNames().ToList().Contains(collection))
             {
-                _mongoClient.GetDatabase(database.DatabaseNamespace.DatabaseName).CreateCollection(collection);
+                _mongoClient.GetDatabase(settings.DatabaseName).CreateCollection(collection);
             }
             _collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
         }
-
-        //public IClientSessionHandle MongoClientStartSession()
-        //{
-        //    return _mongoClient.StartSession();
-        //}
 
         public IMongoClient MongoClient
         {

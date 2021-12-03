@@ -65,7 +65,6 @@ C:\Cloud\MongoExample\WebApi\bin\Debug\net5.0\runtimes\win\native\snappy64.dll
 C:\Cloud\MongoExample\WebApi\bin\Debug\net5.0\runtimes\linux\native\libmongocrypt.so
 C:\Cloud\MongoExample\WebApi\bin\Debug\net5.0\runtimes\osx\native\libmongocrypt.dylib
 C:\Cloud\MongoExample\WebApi\bin\Debug\net5.0\runtimes\win\native\mongocrypt.dll
-C:\Cloud\MongoExample\WebApi\obj\Debug\net5.0\WebApi.csprojAssemblyReference.cache
 C:\Cloud\MongoExample\WebApi\obj\Debug\net5.0\WebApi.GeneratedMSBuildEditorConfig.editorconfig
 C:\Cloud\MongoExample\WebApi\obj\Debug\net5.0\WebApi.AssemblyInfoInputs.cache
 C:\Cloud\MongoExample\WebApi\obj\Debug\net5.0\WebApi.AssemblyInfo.cs

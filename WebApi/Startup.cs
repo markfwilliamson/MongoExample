@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using Swashbuckle.AspNetCore.Swagger;
 using WebApi.Entity;
 using WebApi.Repository;
@@ -44,12 +45,41 @@ namespace WebApi
             //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApi", Version = "v1" });
             //});
 
+            //========================================================
+            // Mongo Configuration - NEW
+            //========================================================
+            services.AddSingleton<IMongoClient>(c =>
+            {
+                //var connectionString = "mongodb://admin:MyPassword@87.15.22.12:27017/admin?connect=replicaSet&replicaSet=rs0";
+                var connectionString = Configuration.GetSection("MongoDbSettings").GetSection("ConnectionString").Value;
+                var mongoUrl = new MongoUrlBuilder(connectionString);
+                var mongoClientSettings = new MongoClientSettings
+                {
+                    Server = new MongoServerAddress(mongoUrl.Server.Host, mongoUrl.Server.Port),
+                    Credential = MongoCredential.CreateCredential(mongoUrl.DatabaseName, mongoUrl.Username, mongoUrl.Password)
+                };
+
+                return new MongoClient(mongoClientSettings);
+            });
+
+            services.AddScoped(c => c.GetService<IMongoClient>().StartSession());
+            services.AddTransient(typeof(IMongoRepository<>), typeof(MongoRepository<>));
+            //========================================================
+            //========================================================
+            //========================================================
+
+            //========================================================
+            // Mongo Configuration - OLD
+            //========================================================
             services.Configure<MongoDbSettings>(Configuration.GetSection("MongoDbSettings"));
 
             services.AddSingleton<IMongoDbSettings>(serviceProvider =>
                 serviceProvider.GetRequiredService<IOptions<MongoDbSettings>>().Value);
 
-            services.AddScoped(typeof(IMongoRepository<>), typeof(MongoRepository<>));
+            //services.AddScoped(typeof(IMongoRepository<>), typeof(MongoRepository<>));
+            //========================================================
+            //========================================================
+            //========================================================
 
             services.AddSwaggerGen(options =>
             {
