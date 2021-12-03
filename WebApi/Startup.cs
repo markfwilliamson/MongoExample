@@ -12,7 +12,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using MongoDB.Bson;
 using Swashbuckle.AspNetCore.Swagger;
+using WebApi.Entity;
+using WebApi.Repository;
 
 namespace WebApi
 {
@@ -39,6 +43,13 @@ namespace WebApi
             //{
             //    c.SwaggerDoc("v1", new OpenApiInfo { Title = "WebApi", Version = "v1" });
             //});
+
+            services.Configure<MongoDbSettings>(Configuration.GetSection("MongoDbSettings"));
+
+            services.AddSingleton<IMongoDbSettings>(serviceProvider =>
+                serviceProvider.GetRequiredService<IOptions<MongoDbSettings>>().Value);
+
+            services.AddScoped(typeof(IMongoRepository<>), typeof(MongoRepository<>));
 
             services.AddSwaggerGen(options =>
             {

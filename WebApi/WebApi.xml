@@ -4,11 +4,5 @@
         <name>WebApi</name>
     </assembly>
     <members>
-        <member name="M:WebApi.Controllers.MongoController.MongoTest">
-            <summary>
-            
-            </summary>
-            <returns></returns>
-        </member>
     </members>
 </doc>
