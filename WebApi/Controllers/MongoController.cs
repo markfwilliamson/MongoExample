@@ -17,7 +17,8 @@ namespace WebApi.Controllers
         private readonly IMongoRepository<Entity.Book> _bookRepository;
         private readonly IMongoRepository<BookActivity> _bookActivityRepository;
         private readonly IClientSessionHandle _clientSessionHandle;
-        int sleepTimeInMilliseconds = 20;
+        private int _numberOfTimesToExecute = 1;
+        private int _numberOfDocumentsToInsert = 100;
 
         public MongoController(IMongoRepository<Entity.Book> bookRepository,
                                 IMongoRepository<Entity.BookActivity> bookActivityRepository,
@@ -31,20 +32,17 @@ namespace WebApi.Controllers
         [HttpGet("Transaction")]
         public ActionResult Transaction()
         {
-            var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
             try
             {
-                for (int a = 0; a < 100; a++)
+                for (int a = 0; a < _numberOfTimesToExecute; a++)
                 {
-                    _clientSessionHandle.StartTransaction(options);
-                    for (int i = 0; i < 10; i++)
+                    _clientSessionHandle.StartTransaction();
+                    for (int i = 0; i < _numberOfDocumentsToInsert; i++)
                     {
-                        _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = $"NewTransaction{i}", Title = $"NewTransaction{i}", Id = new ObjectId() });
-                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
-                        _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = $"NewTransactionMessage{i}", Id = new ObjectId() });
-                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                        _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = $"Transaction{i}", Title = $"Transaction{i}", Id = new ObjectId() });
+                        _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = $"TransactionMessage{i}", Id = new ObjectId() });
                     }
-                    _clientSessionHandle.CommitTransaction(CancellationToken.None);
+                    _clientSessionHandle.CommitTransaction();
                 }
                 return Ok();
             }
@@ -58,43 +56,33 @@ namespace WebApi.Controllers
         [HttpGet("Aborted")]
         public ActionResult Aborted()
         {
-            int counter = 0;
-
-            for (int a = 0; a < 100; a++)
+            for (int a = 0; a < _numberOfTimesToExecute; a++)
             {
-                //var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
                 _clientSessionHandle.StartTransaction();
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < _numberOfDocumentsToInsert; i++)
                 {
-                    _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = $"NewAborted{i}", Title = $"NewAborted{i}", Id = new ObjectId() });
-                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
-                    _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = $"NewAbortedMessage{i}", Id = new ObjectId() });
-                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
-
-                    counter = counter + 1;
+                    _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = $"Aborted{i}", Title = $"Aborted{i}", Id = new ObjectId() });
+                    _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = $"AbortedMessage{i}", Id = new ObjectId() });
                 }
                 _clientSessionHandle.AbortTransaction();
             }
-            return BadRequest($"Abort Transaction {counter}");
+            return BadRequest($"Abort Transaction");
         }
 
         [HttpGet("TransactionAsync")]
         public async Task<ActionResult> TransactionAsync()
         {
-            var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
             try
             {
-                for (int a = 0; a < 100; a++)
+                for (int a = 0; a < _numberOfTimesToExecute; a++)
                 {
-                    _clientSessionHandle.StartTransaction(options);
-                    for (int i = 0; i < 10; i++)
+                    _clientSessionHandle.StartTransaction();
+                    for (int i = 0; i < _numberOfDocumentsToInsert; i++)
                     {
-                        await _bookRepository.InsertOneAsync(_clientSessionHandle, new Book { Author = $"NewTransaction{i}", Title = $"NewTransaction{i}", Id = new ObjectId() });
-                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
-                        await _bookActivityRepository.InsertOneAsync(_clientSessionHandle, new BookActivity { Message = $"NewTransactionMessage{i}", Id = new ObjectId() });
-                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                        await _bookRepository.InsertOneAsync(_clientSessionHandle, new Book { Author = $"Transaction{i}", Title = $"Transaction{i}", Id = new ObjectId() });
+                        await _bookActivityRepository.InsertOneAsync(_clientSessionHandle, new BookActivity { Message = $"TransactionMessage{i}", Id = new ObjectId() });
                     }
-                    await _clientSessionHandle.CommitTransactionAsync(CancellationToken.None);
+                    await _clientSessionHandle.CommitTransactionAsync();
                 }
                 return Ok();
             }
@@ -108,24 +96,17 @@ namespace WebApi.Controllers
         [HttpGet("AbortedAsync")]
         public async Task<ActionResult> AbortedAsync()
         {
-            int counter = 0;
-
-            for (int a = 0; a < 100; a++)
+            for (int a = 0; a < _numberOfTimesToExecute; a++)
             {
-                //var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
                 _clientSessionHandle.StartTransaction();
-                for (int i = 0; i < 10; i++)
+                for (int i = 0; i < _numberOfDocumentsToInsert; i++)
                 {
-                    await _bookRepository.InsertOneAsync(_clientSessionHandle, new Book { Author = $"NewAborted{i}", Title = $"NewAborted{i}", Id = new ObjectId() });
-                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
-                    await _bookActivityRepository.InsertOneAsync(_clientSessionHandle, new BookActivity { Message = $"NewAbortedMessage{i}", Id = new ObjectId() });
-                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
-
-                    counter = counter + 1;
+                    await _bookRepository.InsertOneAsync(_clientSessionHandle, new Book { Author = $"Aborted{i}", Title = $"Aborted{i}", Id = new ObjectId() });
+                    await _bookActivityRepository.InsertOneAsync(_clientSessionHandle, new BookActivity { Message = $"AbortedMessage{i}", Id = new ObjectId() });
                 }
                 await _clientSessionHandle.AbortTransactionAsync();
             }
-            return BadRequest($"Abort Transaction {counter}");
+            return BadRequest($"Abort Transaction");
         }
     }
 }

@@ -46,8 +46,12 @@ namespace WebApi
             //});
 
             //========================================================
-            // Mongo Configuration - NEW
+            // Mongo Configuration
             //========================================================
+            services.Configure<MongoDbSettings>(Configuration.GetSection("MongoDbSettings"));
+            services.AddSingleton<IMongoDbSettings>(serviceProvider => serviceProvider.GetRequiredService<IOptions<MongoDbSettings>>().Value);
+            services.AddTransient(typeof(IMongoRepository<>), typeof(MongoRepository<>));
+
             services.AddSingleton<IMongoClient>(c =>
             {
                 //var connectionString = "mongodb://admin:MyPassword@87.15.22.12:27017/admin?connect=replicaSet&replicaSet=rs0";
@@ -61,22 +65,7 @@ namespace WebApi
 
                 return new MongoClient(mongoClientSettings);
             });
-
             services.AddScoped(c => c.GetService<IMongoClient>().StartSession());
-            services.AddTransient(typeof(IMongoRepository<>), typeof(MongoRepository<>));
-            //========================================================
-            //========================================================
-            //========================================================
-
-            //========================================================
-            // Mongo Configuration - OLD
-            //========================================================
-            services.Configure<MongoDbSettings>(Configuration.GetSection("MongoDbSettings"));
-
-            services.AddSingleton<IMongoDbSettings>(serviceProvider =>
-                serviceProvider.GetRequiredService<IOptions<MongoDbSettings>>().Value);
-
-            //services.AddScoped(typeof(IMongoRepository<>), typeof(MongoRepository<>));
             //========================================================
             //========================================================
             //========================================================

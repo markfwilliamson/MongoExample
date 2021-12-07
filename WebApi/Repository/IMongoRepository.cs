@@ -10,10 +10,6 @@ namespace WebApi.Repository
 {
     public interface IMongoRepository<TDocument> where TDocument : IDocument
     {
-        IMongoClient MongoClient { get; }
-
-        //IClientSessionHandle MongoClientStartSession();
-
         IQueryable<TDocument> AsQueryable();
 
         IEnumerable<TDocument> FilterBy(

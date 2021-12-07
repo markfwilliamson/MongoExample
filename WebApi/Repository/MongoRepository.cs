@@ -14,22 +14,13 @@ namespace WebApi.Repository
     public class MongoRepository<TDocument> : IMongoRepository<TDocument>
         where TDocument : IDocument
     {
-        private readonly IClientSessionHandle _clientSessionHandle;
         private readonly IMongoClient _mongoClient;
-        private readonly MongoClientSettings _mongoClientSettings;
         private readonly IMongoCollection<TDocument> _collection;
+        private readonly int sleepTimeInMilliseconds = 20;
 
-        public MongoRepository(IMongoDbSettings settings, IMongoClient mongoClient, IClientSessionHandle clientSessionHandle)
+        public MongoRepository(IMongoDbSettings settings, IMongoClient mongoClient)
         {
-            _clientSessionHandle = clientSessionHandle;
             _mongoClient = mongoClient;
-
-            //var mongoUrl = new MongoUrlBuilder(settings.ConnectionString);
-            //_mongoClientSettings = new MongoClientSettings
-            //{
-            //    Server = new MongoServerAddress(mongoUrl.Server.Host, mongoUrl.Server.Port),
-            //    Credential = MongoCredential.CreateCredential(mongoUrl.DatabaseName, mongoUrl.Username, mongoUrl.Password)
-            //};
 
             var database = _mongoClient.GetDatabase(settings.DatabaseName);
             var collection = GetCollectionName(typeof(TDocument));
@@ -38,14 +29,6 @@ namespace WebApi.Repository
                 _mongoClient.GetDatabase(settings.DatabaseName).CreateCollection(collection);
             }
             _collection = database.GetCollection<TDocument>(GetCollectionName(typeof(TDocument)));
-        }
-
-        public IMongoClient MongoClient
-        {
-            get
-            {
-                return new MongoClient(_mongoClientSettings);
-            }
         }
 
         private protected string GetCollectionName(Type documentType)
@@ -98,11 +81,21 @@ namespace WebApi.Repository
         {
             if (session == null)
             {
-                return Task.Run(() => _collection.InsertOneAsync(document));
+                return Task.Run(() =>
+                {
+                    var task = _collection.InsertOneAsync(document);
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    return task;
+                });
             }
             else
             {
-                return Task.Run(() => _collection.InsertOneAsync(session, document));
+                return Task.Run(() =>
+                {
+                    var task = _collection.InsertOneAsync(session, document);
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    return task;
+                });
             }
         }
 
@@ -116,6 +109,7 @@ namespace WebApi.Repository
             {
                 _collection.InsertOneAsync(session, document);
             }
+            System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
         }
 
         public virtual async Task InsertManyAsync(ICollection<TDocument> documents)
