@@ -12,6 +12,8 @@ namespace WebApi.Controllers
     [ApiController]
     public class MongoController : ControllerBase
     {
+        int sleepTimeInMilliseconds = 20;
+
         private readonly IMongoRepository<Entity.Book> _bookRepository;
         private readonly IMongoRepository<BookActivity> _bookActivityRepository;
 
@@ -42,10 +44,15 @@ namespace WebApi.Controllers
                 try
                 {
                     _bookRepository.InsertOne(session, new Book { Author = "Transaction1", Title = "Transaction1", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     _bookRepository.InsertOne(session, new Book { Author = "Transaction2", Title = "Transaction2", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     _bookRepository.InsertOne(session, new Book { Author = "Transaction3", Title = "Transaction3", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     _bookRepository.InsertOne(session, new Book { Author = "Transaction4", Title = "Transaction4", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     _bookRepository.InsertOne(session, new Book { Author = "Transaction5", Title = "Transaction5", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
 
                     session.CommitTransaction();
                     
@@ -68,10 +75,15 @@ namespace WebApi.Controllers
                 session.StartTransaction();
 
                 _bookRepository.InsertOne(session, new Book { Author = "Aborted1", Title = "Aborted1", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 _bookRepository.InsertOne(session, new Book { Author = "Aborted2", Title = "Aborted2", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 _bookRepository.InsertOne(session, new Book { Author = "Aborted3", Title = "Aborted3", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 _bookRepository.InsertOne(session, new Book { Author = "Aborted4", Title = "Aborted4", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 _bookRepository.InsertOne(session, new Book { Author = "Aborted5", Title = "Aborted5", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
 
                 session.AbortTransaction();
 
@@ -88,10 +100,15 @@ namespace WebApi.Controllers
                 try
                 {
                     await _bookRepository.InsertOneAsync(session, new Book { Author = "TransactionAsync1", Title = "TransactionAsync1", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     await _bookRepository.InsertOneAsync(session, new Book { Author = "TransactionAsync2", Title = "TransactionAsync2", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     await _bookRepository.InsertOneAsync(session, new Book { Author = "TransactionAsync3", Title = "TransactionAsync3", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     await _bookRepository.InsertOneAsync(session, new Book { Author = "TransactionAsync4", Title = "TransactionAsync4", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                     await _bookRepository.InsertOneAsync(session, new Book { Author = "TransactionAsync5", Title = "TransactionAsync5", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
 
                     await session.CommitTransactionAsync();
 
@@ -114,10 +131,15 @@ namespace WebApi.Controllers
                 session.StartTransaction();
 
                 await _bookRepository.InsertOneAsync(session, new Book { Author = "AbortedAsync1", Title = "AbortedAsync1", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 await _bookRepository.InsertOneAsync(session, new Book { Author = "AbortedAsync2", Title = "AbortedAsync2", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 await _bookRepository.InsertOneAsync(session, new Book { Author = "AbortedAsync3", Title = "AbortedAsync3", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 await _bookRepository.InsertOneAsync(session, new Book { Author = "AbortedAsync4", Title = "AbortedAsync4", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
                 await _bookRepository.InsertOneAsync(session, new Book { Author = "AbortedAsync5", Title = "AbortedAsync5", Id = new ObjectId() });
+                System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
 
                 await session.AbortTransactionAsync();
 
