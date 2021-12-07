@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using MongoDB.Bson;
@@ -26,53 +27,56 @@ namespace WebApi.Controllers
             _clientSessionHandle = clientSessionHandle;
         }
 
-        [HttpGet("NewTransaction")]
-        public ActionResult NewTransaction()
+        [HttpGet("Transaction")]
+        public ActionResult Transaction()
         {
-            _clientSessionHandle.StartTransaction();
+            var sleepTimeInMilliseconds = 20;
+            var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
             try
             {
-                _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewTransaction1", Title = "NewTransaction1", Id = new ObjectId() });
-                _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewTransaction2", Title = "NewTransaction2", Id = new ObjectId() });
-                _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewTransaction3", Title = "NewTransaction3", Id = new ObjectId() });
-                _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewTransaction4", Title = "NewTransaction4", Id = new ObjectId() });
-                _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewTransaction5", Title = "NewTransaction5", Id = new ObjectId() });
-                _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewTransactionMessage1", Id = new ObjectId() });
-                _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewTransactionMessage2", Id = new ObjectId() });
-                _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewTransactionMessage3", Id = new ObjectId() });
-                _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewTransactionMessage4", Id = new ObjectId() });
-                _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewTransactionMessage5", Id = new ObjectId() });
-                _clientSessionHandle.CommitTransaction();
-
+                for (int a = 0; a < 100; a++)
+                {
+                    _clientSessionHandle.StartTransaction(options);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = $"NewTransaction{i}", Title = $"NewTransaction{i}", Id = new ObjectId() });
+                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                        _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = $"NewTransactionMessage{i}", Id = new ObjectId() });
+                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    }
+                    _clientSessionHandle.CommitTransaction(CancellationToken.None);
+                }
                 return Ok();
             }
             catch (Exception ex)
             {
                 _clientSessionHandle.AbortTransaction();
-
                 return BadRequest(ex.Message);
             }
         }
 
-        [HttpGet("NewAborted")]
-        public ActionResult NewAborted()
+        [HttpGet("Aborted")]
+        public ActionResult Aborted()
         {
-            _clientSessionHandle.StartTransaction();
+            int counter = 0;
+            var sleepTimeInMilliseconds = 20;
 
-            _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewAborted1", Title = "NewAborted1", Id = new ObjectId() });
-            _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewAborted2", Title = "NewAborted2", Id = new ObjectId() });
-            _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewAborted3", Title = "NewAborted3", Id = new ObjectId() });
-            _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewAborted4", Title = "NewAborted4", Id = new ObjectId() });
-            _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = "NewAborted5", Title = "NewAborted5", Id = new ObjectId() });
-            _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewAbortedMessage1", Id = new ObjectId() });
-            _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewAbortedMessage2", Id = new ObjectId() });
-            _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewAbortedMessage3", Id = new ObjectId() });
-            _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewAbortedMessage4", Id = new ObjectId() });
-            _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = "NewAbortedMessage5", Id = new ObjectId() });
+            for (int a = 0; a < 100; a++)
+            {
+                //var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
+                _clientSessionHandle.StartTransaction();
+                for (int i = 0; i < 10; i++)
+                {
+                    _bookRepository.InsertOne(_clientSessionHandle, new Book { Author = $"NewAborted{i}", Title = $"NewAborted{i}", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    _bookActivityRepository.InsertOne(_clientSessionHandle, new BookActivity { Message = $"NewAbortedMessage{i}", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
 
-            _clientSessionHandle.AbortTransaction();
-
-            return BadRequest("Abort Transaction");
+                    counter = counter + 1;
+                }
+                _clientSessionHandle.AbortTransaction();
+            }
+            return BadRequest($"Abort Transaction {counter}");
         }
     }
 }
