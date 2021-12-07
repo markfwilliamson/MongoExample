@@ -17,6 +17,7 @@ namespace WebApi.Controllers
         private readonly IMongoRepository<Entity.Book> _bookRepository;
         private readonly IMongoRepository<BookActivity> _bookActivityRepository;
         private readonly IClientSessionHandle _clientSessionHandle;
+        int sleepTimeInMilliseconds = 20;
 
         public MongoController(IMongoRepository<Entity.Book> bookRepository,
                                 IMongoRepository<Entity.BookActivity> bookActivityRepository,
@@ -30,7 +31,6 @@ namespace WebApi.Controllers
         [HttpGet("Transaction")]
         public ActionResult Transaction()
         {
-            var sleepTimeInMilliseconds = 20;
             var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
             try
             {
@@ -59,7 +59,6 @@ namespace WebApi.Controllers
         public ActionResult Aborted()
         {
             int counter = 0;
-            var sleepTimeInMilliseconds = 20;
 
             for (int a = 0; a < 100; a++)
             {
@@ -75,6 +74,56 @@ namespace WebApi.Controllers
                     counter = counter + 1;
                 }
                 _clientSessionHandle.AbortTransaction();
+            }
+            return BadRequest($"Abort Transaction {counter}");
+        }
+
+        [HttpGet("TransactionAsync")]
+        public async Task<ActionResult> TransactionAsync()
+        {
+            var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
+            try
+            {
+                for (int a = 0; a < 100; a++)
+                {
+                    _clientSessionHandle.StartTransaction(options);
+                    for (int i = 0; i < 10; i++)
+                    {
+                        await _bookRepository.InsertOneAsync(_clientSessionHandle, new Book { Author = $"NewTransaction{i}", Title = $"NewTransaction{i}", Id = new ObjectId() });
+                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                        await _bookActivityRepository.InsertOneAsync(_clientSessionHandle, new BookActivity { Message = $"NewTransactionMessage{i}", Id = new ObjectId() });
+                        System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    }
+                    await _clientSessionHandle.CommitTransactionAsync(CancellationToken.None);
+                }
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                await _clientSessionHandle.AbortTransactionAsync();
+                return BadRequest(ex.Message);
+            }
+        }
+
+        [HttpGet("AbortedAsync")]
+        public async Task<ActionResult> AbortedAsync()
+        {
+            int counter = 0;
+
+            for (int a = 0; a < 100; a++)
+            {
+                //var options = new TransactionOptions(ReadConcern.Snapshot, ReadPreference.Primary, WriteConcern.WMajority);
+                _clientSessionHandle.StartTransaction();
+                for (int i = 0; i < 10; i++)
+                {
+                    await _bookRepository.InsertOneAsync(_clientSessionHandle, new Book { Author = $"NewAborted{i}", Title = $"NewAborted{i}", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    await _bookActivityRepository.InsertOneAsync(_clientSessionHandle, new BookActivity { Message = $"NewAbortedMessage{i}", Id = new ObjectId() });
+                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+
+                    counter = counter + 1;
+                }
+                await _clientSessionHandle.AbortTransactionAsync();
             }
             return BadRequest($"Abort Transaction {counter}");
         }
