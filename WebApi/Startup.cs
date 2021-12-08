@@ -54,7 +54,6 @@ namespace WebApi
 
             services.AddSingleton<IMongoClient>(c =>
             {
-                //var connectionString = "mongodb://admin:MyPassword@87.15.22.12:27017/admin?connect=replicaSet&replicaSet=rs0";
                 var connectionString = Configuration.GetSection("MongoDbSettings").GetSection("ConnectionString").Value;
                 var mongoUrl = new MongoUrlBuilder(connectionString);
                 var mongoClientSettings = new MongoClientSettings

@@ -16,7 +16,7 @@ namespace WebApi.Repository
     {
         private readonly IMongoClient _mongoClient;
         private readonly IMongoCollection<TDocument> _collection;
-        private readonly int sleepTimeInMilliseconds = 20;
+        private readonly int _sleepTimeInMilliseconds = 20; //Based on MongoDB's recommendation... https://docs.mongodb.com/manual/reference/method/sleep/
 
         public MongoRepository(IMongoDbSettings settings, IMongoClient mongoClient)
         {
@@ -84,7 +84,7 @@ namespace WebApi.Repository
                 return Task.Run(() =>
                 {
                     var task = _collection.InsertOneAsync(document);
-                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    System.Threading.Thread.Sleep(_sleepTimeInMilliseconds);
                     return task;
                 });
             }
@@ -93,7 +93,7 @@ namespace WebApi.Repository
                 return Task.Run(() =>
                 {
                     var task = _collection.InsertOneAsync(session, document);
-                    System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+                    System.Threading.Thread.Sleep(_sleepTimeInMilliseconds);
                     return task;
                 });
             }
@@ -109,7 +109,7 @@ namespace WebApi.Repository
             {
                 _collection.InsertOneAsync(session, document);
             }
-            System.Threading.Thread.Sleep(sleepTimeInMilliseconds);
+            System.Threading.Thread.Sleep(_sleepTimeInMilliseconds);
         }
 
         public virtual async Task InsertManyAsync(ICollection<TDocument> documents)

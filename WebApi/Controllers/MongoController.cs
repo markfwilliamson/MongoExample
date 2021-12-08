@@ -17,7 +17,7 @@ namespace WebApi.Controllers
         private readonly IMongoRepository<Entity.Book> _bookRepository;
         private readonly IMongoRepository<BookActivity> _bookActivityRepository;
         private readonly IClientSessionHandle _clientSessionHandle;
-        private int _numberOfTimesToExecute = 1;
+        private int _numberOfTimesToExecute = 5;
         private int _numberOfDocumentsToInsert = 100;
 
         public MongoController(IMongoRepository<Entity.Book> bookRepository,
